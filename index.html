@@ -5529,855 +5529,922 @@
             // CORRECCIÓN: Llamar a updateContentHeight después de un breve delay
             setTimeout(updateContentHeight, 10);
             
-                       function renderQuestionChart(canvasId, datos, titulo, total) {
-              const ctx = document.getElementById(canvasId).getContext('2d');
-              
-              // Destruir gráfico existente si existe
-              if (window[canvasId + 'Chart']) {
-                window[canvasId + 'Chart'].destroy();
-              }
-              
-              const labels = ['Totalmente desacuerdo', 'Desacuerdo', 'Indiferente', 'De acuerdo', 'Totalmente de acuerdo'];
-              const data = [
-                datos['Totalmente desacuerdo'] || 0,
-                datos['Desacuerdo'] || 0,
-                datos['Indiferente'] || 0,
-                datos['De acuerdo'] || 0,
-                datos['Totalmente de acuerdo'] || 0
-              ];
-              
-              const colors = ['#ef4444', '#f59e0b', '#94a3b8', '#0ea5e9', '#10b981'];
-              
-              window[canvasId + 'Chart'] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: 'Porcentaje (%)',
-                    data: data,
-                    backgroundColor: colors,
-                    borderColor: colors.map(c => c.replace(')', ', 0.8)')),
-                    borderWidth: 1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: titulo,
-                      font: {
-                        size: 14,
-                        weight: 'bold'
-                      },
-                      padding: {
-                        top: 10,
-                        bottom: 20
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          const value = context.parsed ? context.parsed.y : context.raw;
-                          const count = Math.round((value / 100) * total);
-                          return `${context.dataset.label}: ${value.toFixed(1)}% (${count} personas)`;
-                        }
-                      }
-                    },
-                    datalabels: {
-                      formatter: function(value) {
-                        return value.toFixed(1) + '%';
-                      },
-                      color: '#1e293b',
-                      font: {
-                        weight: 'bold',
-                        size: 12
-                      },
-                      anchor: 'end',
-                      align: 'top'
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      title: {
-                        display: true,
-                        text: 'Porcentaje (%)'
-                      }
-                    }
-                  }
-                },
-                plugins: [ChartDataLabels]
-              });
-            }
+           // Continuación del código desde donde se interrumpió
 
-            // Actualizar todos los gráficos
-            function actualizarGraficos() {
-              const distribuciones = calcularDistribuciones(currentData);
-              renderDemographicsCharts(distribuciones);
-              
-              // Renderizar gráficos de preguntas si están en la pestaña correspondiente
-              const activeTab = document.querySelector('.tab.active[data-tab]');
-              if (activeTab) {
-                const tabId = activeTab.getAttribute('data-tab');
-                if (tabId === 'sociocultural') {
-                  renderSocioculturalCharts();
-                } else if (tabId === 'afectivos') {
-                  renderAfectivosCharts();
-                } else if (tabId === 'cognitivos') {
-                  renderCognitivosCharts();
-                } else if (tabId === 'ambiental') {
-                  renderAmbientalCharts();
-                } else if (tabId === 'economica') {
-                  renderEconomicaCharts();
-                } else if (tabId === 'comunitario') {
-                  renderComunitarioCharts();
-                }
-              }
-            }
-
-            // Actualizar tablas de resumen
-            function actualizarTablas() {
-              const distribuciones = calcularDistribuciones(currentData);
-              const { distribuciones: distribucionesLikert, promedios: promediosLikert } = calcularDistribucionesLikert(currentData);
-              
-              // Actualizar tablas demográficas
-              actualizarTablaDemografica('tablaEstadoCivil', distribuciones.estadoCivil, distribuciones.counts.estadoCivil, 'totalEstadoCivil');
-              actualizarTablaDemografica('tablaEdades', distribuciones.edad, distribuciones.counts.edad, 'totalEdades');
-              actualizarTablaDemografica('tablaEducacion', distribuciones.educacion, distribuciones.counts.educacion, 'totalEducacion');
-              actualizarTablaDemografica('tablaLaboral', distribuciones.laboral, distribuciones.counts.laboral, 'totalLaboral');
-              actualizarTablaDemografica('tablaIngreso', distribuciones.ingreso, distribuciones.counts.ingreso, 'totalIngreso');
-              actualizarTablaDemografica('tablaHogar', distribuciones.hogar, distribuciones.counts.hogar, 'totalHogar');
-              
-              // Actualizar tablas Likert
-              actualizarTablaLikert('tablaSociocultural', distribucionesLikert.sociocultural, promediosLikert.sociocultural, [
-                'conoce_desechos_solidos',
-                'cree_comportamiento_adecuado_manejo',
-                'separar_desechos_por_origen',
-                'clasificacion_correcta_desechos',
-                'comportamiento_comunidad_influye',
-                'dedica_tiempo_reducir_reutilizar_reciclar',
-                'desechos_solidos_problema_comunidad'
-              ], [
-                '¿Conoce usted qué son los desechos sólidos domiciliarios?',
-                '¿Cree usted que existe un comportamiento adecuado en el manejo de los desechos sólidos domiciliarios en la comunidad?',
-                '¿Se debe separar los desechos sólidos según su tipo ejemplo: (papel - plástico - orgánico - inorgánico)?',
-                '¿Es importante la correcta clasificación de los desechos sólidos orgánicos e inorgánicos en el hogar?',
-                '¿Cree que el comportamiento de la comunidad influye en deterioro del medio ambiente?',
-                '¿Dedica tiempo para reducir, reutilizar y/o reciclar los desechos sólidos que se generan en el hogar?',
-                '¿Los desechos sólidos son un gran problema para la comunidad?'
-              ], 'promedioSociocultural');
-              
-              // Similar para las otras categorías...
-            }
-
-            function actualizarTablaDemografica(tablaId, distribucion, counts, totalId) {
-              const tbody = document.getElementById(tablaId);
-              if (!tbody) return;
-              
-              tbody.innerHTML = '';
-              let total = 0;
-              
-              Object.keys(distribucion).forEach(key => {
-                const porcentaje = distribucion[key];
-                const count = counts[key] || 0;
-                total += count;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${key}</td>
-                  <td style="text-align:right">${count}</td>
-                  <td style="text-align:right">${porcentaje.toFixed(1)}%</td>
-                `;
-                tbody.appendChild(row);
-              });
-              
-              document.getElementById(totalId).textContent = total;
-            }
-
-            function actualizarTablaLikert(tablaId, distribuciones, promedios, preguntas, titulos, prefijoPromedio) {
-              const tbody = document.getElementById(tablaId);
-              if (!tbody) return;
-              
-              tbody.innerHTML = '';
-              
-              preguntas.forEach((pregunta, index) => {
-                const datos = distribuciones[pregunta];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${titulos[index]}</td>
-                  <td style="text-align:center">${datos['Totalmente desacuerdo'].toFixed(1)}%</td>
-                  <td style="text-align:center">${datos['Desacuerdo'].toFixed(1)}%</td>
-                  <td style="text-align:center">${datos['Indiferente'].toFixed(1)}%</td>
-                  <td style="text-align:center">${datos['De acuerdo'].toFixed(1)}%</td>
-                  <td style="text-align:center">${datos['Totalmente de acuerdo'].toFixed(1)}%</td>
-                  <td style="text-align:center">${datos['Promedio'].toFixed(1)}%</td>
-                `;
-                tbody.appendChild(row);
-              });
-              
-              // Actualizar promedios generales en el footer
-              document.getElementById(`${prefijoPromedio}TD`).textContent = `${promedios['Totalmente desacuerdo'].toFixed(1)}%`;
-              document.getElementById(`${prefijoPromedio}D`).textContent = `${promedios['Desacuerdo'].toFixed(1)}%`;
-              document.getElementById(`${prefijoPromedio}I`).textContent = `${promedios['Indiferente'].toFixed(1)}%`;
-              document.getElementById(`${prefijoPromedio}A`).textContent = `${promedios['De acuerdo'].toFixed(1)}%`;
-              document.getElementById(`${prefijoPromedio}TA`).textContent = `${promedios['Totalmente de acuerdo'].toFixed(1)}%`;
-              document.getElementById(`${prefijoPromedio}`).textContent = `${promedios['Promedio'].toFixed(1)}%`;
-            }
-
-            // Actualizar resumen general
-            function actualizarResumen() {
-              const distribuciones = calcularDistribuciones(currentData);
-              
-              // Actualizar total de encuestados
-              summaryTotal.textContent = currentData.length;
-              
-              // Encontrar el tipo de hogar predominante
-              let maxHogar = 0;
-              let tipoHogar = '-';
-              Object.keys(distribuciones.hogar).forEach(key => {
-                if (distribuciones.hogar[key] > maxHogar) {
-                  maxHogar = distribuciones.hogar[key];
-                  tipoHogar = key;
-                }
-              });
-              summaryHogar.textContent = tipoHogar;
-              summaryHogarChange.innerHTML = `<span>${maxHogar.toFixed(1)}% del total</span>`;
-              
-              // Encontrar educación predominante
-              let maxEducacion = 0;
-              let nivelEducacion = '-';
-              Object.keys(distribuciones.educacion).forEach(key => {
-                if (distribuciones.educacion[key] > maxEducacion) {
-                  maxEducacion = distribuciones.educacion[key];
-                  nivelEducacion = key;
-                }
-              });
-              summaryEducacion.textContent = nivelEducacion;
-              summaryEducacionChange.innerHTML = `<span>${maxEducacion.toFixed(1)}% del total</span>`;
-              
-              // Encontrar situación laboral predominante
-              let maxLaboral = 0;
-              let situacionLaboral = '-';
-              Object.keys(distribuciones.laboral).forEach(key => {
-                if (distribuciones.laboral[key] > maxLaboral) {
-                  maxLaboral = distribuciones.laboral[key];
-                  situacionLaboral = key;
-                }
-              });
-              summaryLaboral.textContent = situacionLaboral;
-              summaryLaboralChange.innerHTML = `<span>${maxLaboral.toFixed(1)}% del total</span>`;
-            }
-
-            // Función principal de actualización
-            async function actualizar() {
-              currentData = await obtenerFiltrados();
-              
-              // Actualizar interfaz
-              actualizarResumen();
-              actualizarGraficos();
-              actualizarTablas();
-            }
-
-            // Inicializar la aplicación
-            await initApp();
-          })();
+// Función para renderizar gráficos de preguntas Likert
+function renderQuestionChart(canvasId, datos, titulo, totalEncuestados) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  // Destruir gráfico existente si existe
+  if (window[canvasId]) {
+    window[canvasId].destroy();
+  }
+  
+  // Datos para el gráfico
+  const labels = ['Totalmente desacuerdo', 'Desacuerdo', 'Indiferente', 'De acuerdo', 'Totalmente de acuerdo'];
+  const dataValues = [
+    datos['Totalmente desacuerdo'] || 0,
+    datos['Desacuerdo'] || 0,
+    datos['Indiferente'] || 0,
+    datos['De acuerdo'] || 0,
+    datos['Totalmente de acuerdo'] || 0
+  ];
+  
+  const colors = ['#ef4444', '#f59e0b', '#94a3b8', '#60a5fa', '#10b981'];
+  
+  // Determinar tipo de gráfico según selección
+  let chartType = currentChartType;
+  
+  // Configuración específica para cada tipo de gráfico
+  let chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: chartType === 'pie' || chartType === 'doughnut',
+        position: 'right'
+      },
+      title: {
+        display: true,
+        text: titulo,
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        padding: {
+          top: 10,
+          bottom: 20
         }
-    }
-
-    // --- DASHBOARD DE CARACTERIZACIÓN DE DESECHOS ---
-    function initCaracterizacionDashboard() {
-      (async function() {
-        // ---------- CONFIGURACIÓN ----------
-        const SUPABASE_URL = "https://dutapywxsiuxboqsjqvf.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1dGFweXd4c2l1eGJvcXNqcXZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTk1MTUsImV4cCI6MjA2OTI5NTUxNX0.SBIDeV_WAWlyLs-ROD1ibXtqqY5bbbh0gouY8gRB9Y4";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // ---------- SELECTORES ----------
-        const selectLugar = document.getElementById('selectLugar');
-        const btnResetFilters = document.getElementById('btnResetFilters');
-        const btnHelp = document.getElementById('btnHelp');
-        const helpModal = document.getElementById('helpModal');
-        const closeModal = document.getElementById('closeModal');
-
-        // Elementos de resumen
-        const summaryEncuestas = document.getElementById('summaryEncuestas');
-        const summaryUbicaciones = document.getElementById('summaryUbicaciones');
-        const summaryTotalKg = document.getElementById('summaryTotalKg');
-        const summaryPromedio = document.getElementById('summaryPromedio');
-
-        // Variables globales para datos
-        let currentData = [];
-        let allData = [];
-        let filterOptions = {
-          lugares: []
-        };
-
-        // Variables para control de gráficos
-        let currentChartType = 'bar';
-        let mainChart = null;
-
-        // Inicializar la aplicación
-        async function initApp() {
-          await cargarTodosLosDatos();
-          await inicializarFiltros();
-          await actualizar();
-          setupEventListeners();
-        }
-
-        // Configurar event listeners
-        function setupEventListeners() {
-          // Actualización automática al cambiar filtros
-          selectLugar.addEventListener('change', async function() {
-            await actualizar();
-          });
-          
-          // Botón para restablecer filtros
-          btnResetFilters.addEventListener('click', function() {
-            selectLugar.value = '';
-            actualizar();
-          });
-          
-          // Botón de ayuda
-          btnHelp.addEventListener('click', function() {
-            helpModal.classList.add('active');
-          });
-          
-          // Cerrar modal de ayuda
-          closeModal.addEventListener('click', function() {
-            helpModal.classList.remove('active');
-          });
-          
-          // Cerrar modal al hacer clic fuera
-          helpModal.addEventListener('click', function(e) {
-            if (e.target === helpModal) {
-              helpModal.classList.remove('active');
-            }
-          });
-          
-          // Cambiar tipo de gráfico
-          document.querySelectorAll('.chart-action-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-              // Remover clase activa de todos los botones
-              document.querySelectorAll('.chart-action-btn').forEach(b => {
-                b.classList.remove('active');
-              });
-              
-              // Agregar clase activa al botón seleccionado
-              this.classList.add('active');
-              
-              // Cambiar tipo de gráfico
-              currentChartType = this.getAttribute('data-chart-type');
-              actualizarGraficos();
-            });
-          });
-        }
-
-        // Cargar todos los datos para análisis
-        async function cargarTodosLosDatos() {
-          const q = await supabase.from('caracterizacion_desechos_daule').select('*');
-          if (q.error) {
-            console.error(q.error);
-            return;
-          }
-          allData = q.data || [];
-        }
-
-        // Cargar lista de filtros desde la BD
-        async function inicializarFiltros() {
-          // Obtener todos los datos para construir los filtros
-          const q = await supabase.from('caracterizacion_desechos_daule').select('lugar');
-          if (q.error) {
-            console.error(q.error);
-            return;
-          }
-          const rows = q.data || [];
-
-          // Construir opciones de filtro
-          filterOptions.lugares = [...new Set(rows.map(r => r.lugar).filter(Boolean))].sort();
-
-          // Actualizar información de filtros
-          document.getElementById('lugarInfo').textContent = `${filterOptions.lugares.length} ubicaciones disponibles`;
-
-          // Llenar selector con todas las opciones iniciales
-          llenarSelector(selectLugar, filterOptions.lugares);
-        }
-
-        // Función para llenar un selector con opciones
-        function llenarSelector(selector, opciones) {
-          // Guardar la opción seleccionada actualmente
-          const valorActual = selector.value;
-          
-          // Limpiar selector (excepto la primera opción)
-          while (selector.options.length > 1) {
-            selector.remove(1);
-          }
-          
-          // Agregar nuevas opciones
-          opciones.forEach(opcion => {
-            const option = document.createElement('option');
-            option.value = opcion;
-            option.textContent = opcion;
-            selector.appendChild(option);
-          });
-          
-          // Restaurar la selección anterior si todavía existe
-          if (valorActual && opciones.includes(valorActual)) {
-            selector.value = valorActual;
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.dataset.label || '';
+            const value = context.parsed ? context.parsed.y : context.raw;
+            const count = Math.round((value / 100) * totalEncuestados);
+            return `${label}: ${value.toFixed(1)}% (${count} personas)`;
           }
         }
-
-        // Construir query según filtros y traer datos
-        async function obtenerFiltrados() {
-          let q = supabase.from('caracterizacion_desechos_daule').select('*');
-          if (selectLugar.value) q = q.eq('lugar', selectLugar.value);
-          
-          const r = await q;
-          if (r.error) {
-            console.error(r.error);
-            return [];
-          }
-          return r.data || [];
-        }
-
-        // Calcular resumen de datos
-        function calcularResumen(rows) {
-          const totalEncuestas = rows.length;
-          const lugaresUnicos = [...new Set(rows.map(r => r.lugar).filter(Boolean))].length;
-          
-          // Calcular total de kilogramos (suma de todos los campos numéricos)
-          let totalKg = 0;
-          rows.forEach(row => {
-            // Sumar todos los campos que parecen ser números
-            Object.keys(row).forEach(key => {
-              if (key !== 'id' && key !== 'lugar' && key !== 'created_at' && key !== 'fecha') {
-                const value = parseFloat(row[key]);
-                if (!isNaN(value)) {
-                  totalKg += value;
-                }
-              }
-            });
-          });
-          
-          const promedioPorEncuesta = totalEncuestas > 0 ? totalKg / totalEncuestas : 0;
-          
-          return {
-            totalEncuestas,
-            lugaresUnicos,
-            totalKg: Math.round(totalKg * 100) / 100, // Redondear a 2 decimales
-            promedioPorEncuesta: Math.round(promedioPorEncuesta * 100) / 100
-          };
-        }
-
-        // Calcular distribución por categorías
-        function calcularDistribucionPorCategorias(rows) {
-          // Definir categorías y sus campos correspondientes
-          const categorias = {
-            'Desechos Orgánicos': [
-              'frutas_verduras', 'cascaras_huevos', 'sobras_comida', 'cascaras_frutas_verduras', 
-              'huesos', 'recortes_cesped', 'hojas_ramas', 'pan_dulces', 'cascaras_nueces'
-            ],
-            'Papel y Cartón': [
-              'periodicos_revistas', 'cajas_carton', 'papel_blanco', 'papel_color', 
-              'carton_ondulado', 'sobres', 'bolsas_papel'
-            ],
-            'Plásticos': [
-              'botellas_plastico', 'bolsas_plastico', 'envases_alimentos', 'tapas_plastico', 
-              'envoltorios_plastico', 'vasos_plastico', 'platos_plastico', 'cubiertos_plastico'
-            ],
-            'Vidrio': [
-              'botellas_vidrio', 'frascos_vidrio', 'envases_vidrio', 'vidrio_roto'
-            ],
-            'Metales': [
-              'latas_aluminio', 'latas_acero', 'envases_metalicos', 'tapas_metalicas', 
-              'alambre', 'chatarra_metal'
-            ],
-            'Textiles': [
-              'ropa_usada', 'trapo_ropa', 'zapatos', 'cortinas', 'sabanas_manteles'
-            ],
-            'Desechos Peligrosos': [
-              'baterias', 'pilas', 'medicamentos', 'productos_quimicos', 'aerosoles', 
-              'aceites_usados', 'electrodomesticos'
-            ],
-            'Otros Desechos': [
-              'pañales_desechables', 'toallas_sanitarias', 'cigarros', 'cenizas', 
-              'polvo_barrido', 'muebles_rotos', 'escombros'
-            ]
-          };
-          
-          const distribucion = {};
-          let totalGeneral = 0;
-          
-          // Calcular total por categoría
-          Object.keys(categorias).forEach(categoria => {
-            let totalCategoria = 0;
-            categorias[categoria].forEach(campo => {
-              rows.forEach(row => {
-                const valor = parseFloat(row[campo]);
-                if (!isNaN(valor)) {
-                  totalCategoria += valor;
-                }
-              });
-            });
-            
-            distribucion[categoria] = totalCategoria;
-            totalGeneral += totalCategoria;
-          });
-          
-          // Calcular porcentajes
-          const distribucionConPorcentajes = {};
-          Object.keys(distribucion).forEach(categoria => {
-            distribucionConPorcentajes[categoria] = {
-              peso: distribucion[categoria],
-              porcentaje: totalGeneral > 0 ? (distribucion[categoria] / totalGeneral) * 100 : 0
-            };
-          });
-          
-          return {
-            distribucion: distribucionConPorcentajes,
-            totalGeneral
-          };
-        }
-
-        // Actualizar resumen general
-        function actualizarResumen() {
-          const resumen = calcularResumen(currentData);
-          
-          summaryEncuestas.textContent = resumen.totalEncuestas;
-          summaryUbicaciones.textContent = resumen.lugaresUnicos;
-          summaryTotalKg.textContent = `${resumen.totalKg} kg`;
-          summaryPromedio.textContent = `${resumen.promedioPorEncuesta} kg`;
-        }
-
-        // Renderizar gráfico principal
-        function renderMainChart() {
-          const ctx = document.getElementById('mainChart').getContext('2d');
-          
-          // Destruir gráfico existente si existe
-          if (mainChart) {
-            mainChart.destroy();
-          }
-          
-          const distribucion = calcularDistribucionPorCategorias(currentData);
-          const categorias = Object.keys(distribucion.distribucion);
-          const pesos = categorias.map(cat => distribucion.distribucion[cat].peso);
-          const porcentajes = categorias.map(cat => distribucion.distribucion[cat].porcentaje);
-          
-          const colors = [
-            '#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', 
-            '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'
-          ];
-          
-          // Configuración específica para cada tipo de gráfico
-          let chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: currentChartType === 'pie' || currentChartType === 'doughnut',
-                position: 'right'
-              },
-              title: {
-                display: true,
-                text: 'Distribución de Desechos por Categoría',
-                font: {
-                  size: 16,
-                  weight: 'bold'
-                },
-                padding: {
-                  top: 10,
-                  bottom: 30
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const label = context.dataset.label || '';
-                    const value = context.parsed ? context.parsed.y : context.raw;
-                    const porcentaje = porcentajes[context.dataIndex];
-                    return `${label}: ${value.toFixed(1)} kg (${porcentaje.toFixed(1)}%)`;
-                  }
-                }
-              }
-            }
-          };
-          
-          // Configuración específica para gráficos de torta
-          if (currentChartType === 'pie') {
-            chartOptions.plugins.datalabels = {
-              formatter: (value, ctx) => {
-                const porcentaje = porcentajes[ctx.dataIndex];
-                // Si el porcentaje es menor a 5%, mostrar la etiqueta fuera
-                if (porcentaje < 5) {
-                  return null;
-                }
-                return `${porcentaje.toFixed(1)}%`;
-              },
-              color: '#fff',
-              font: {
-                weight: 'bold',
-                size: 12
-              },
-              textShadowBlur: 10,
-              textShadowColor: 'rgba(0,0,0,0.8)'
-            };
-          }
-          
-          // Configuración específica para gráficos de barras
-          if (currentChartType === 'bar') {
-            chartOptions.scales = {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Peso (kg)'
-                }
-              }
-            };
-            chartOptions.plugins.datalabels = {
-              formatter: function(value, context) {
-                const porcentaje = porcentajes[context.dataIndex];
-                return `${value.toFixed(1)} kg\n(${porcentaje.toFixed(1)}%)`;
-              },
-              color: '#1e293b',
-              font: {
-                weight: 'bold',
-                size: 11
-              },
-              anchor: 'end',
-              align: 'top',
-              offset: 2
-            };
-          }
-          
-          // Configuración específica para gráficos de líneas
-          if (currentChartType === 'line') {
-            chartOptions.scales = {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Peso (kg)'
-                }
-              }
-            };
-            chartOptions.plugins.datalabels = {
-              formatter: function(value, context) {
-                const porcentaje = porcentajes[context.dataIndex];
-                return `${value.toFixed(1)} kg`;
-              },
-              color: '#1e293b',
-              font: {
-                weight: 'bold',
-                size: 11
-              },
-              align: 'top',
-              offset: 8
-            };
-          }
-          
-          mainChart = new Chart(ctx, {
-            type: currentChartType,
-            data: {
-              labels: categorias,
-              datasets: [{
-                label: 'Peso (kg)',
-                data: pesos,
-                backgroundColor: colors.slice(0, categorias.length),
-                borderColor: colors.slice(0, categorias.length).map(c => c.replace(')', ', 0.8)')),
-                borderWidth: 1,
-                fill: currentChartType === 'line'
-              }]
-            },
-            options: chartOptions,
-            plugins: [ChartDataLabels]
-          });
-        }
-
-        // Actualizar tabla de resumen
-        function actualizarTablaResumen() {
-          const tbody = document.getElementById('tbodyResumen');
-          if (!tbody) return;
-          
-          tbody.innerHTML = '';
-          
-          const distribucion = calcularDistribucionPorCategorias(currentData);
-          const categorias = Object.keys(distribucion.distribucion);
-          
-          categorias.forEach(categoria => {
-            const datos = distribucion.distribucion[categoria];
-            
-            // Fila de categoría principal
-            const categoriaRow = document.createElement('tr');
-            categoriaRow.className = 'category-header';
-            categoriaRow.innerHTML = `
-              <td><strong>${categoria}</strong></td>
-              <td style="text-align:right"><strong>${datos.peso.toFixed(1)} kg</strong></td>
-              <td style="text-align:right"><strong>${datos.porcentaje.toFixed(1)}%</strong></td>
-            `;
-            tbody.appendChild(categoriaRow);
-          });
-          
-          // Fila de total general
-          const totalRow = document.createElement('tr');
-          totalRow.className = 'total-row';
-          totalRow.innerHTML = `
-            <td><strong>TOTAL GENERAL</strong></td>
-            <td style="text-align:right"><strong>${distribucion.totalGeneral.toFixed(1)} kg</strong></td>
-            <td style="text-align:right"><strong>100%</strong></td>
-          `;
-          tbody.appendChild(totalRow);
-        }
-
-        // Actualizar todos los gráficos
-        function actualizarGraficos() {
-          renderMainChart();
-        }
-
-        // Función principal de actualización
-        async function actualizar() {
-          currentData = await obtenerFiltrados();
-          
-          // Actualizar interfaz
-          actualizarResumen();
-          actualizarGraficos();
-          actualizarTablaResumen();
-        }
-
-        // Inicializar la aplicación
-        await initApp();
-      })();
-    }
-
-    // Inicialización al cargar la página 
-    document.addEventListener('DOMContentLoaded', () => {
-        showSection('inicio'); 
-        addToNavigationHistory('inicio');
-        
-        if (isTouchDevice) {
-            document.body.classList.add('touch-device');
-        }
-        
-        const savedData = localStorage.getItem('wasteManagementSystem');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            if (data.content) {
-                // Datos guardados disponibles
-            }
-        }
-    });
-
-    // --- Sistema de Historial de Acciones ---
-    function saveAction(action) {
-      if (currentHistoryIndex < actionHistory.length - 1) {
-        actionHistory = actionHistory.slice(0, currentHistoryIndex + 1);
       }
-      
-      actionHistory.push(action);
-      currentHistoryIndex = actionHistory.length - 1;
-      
-      if (actionHistory.length > MAX_HISTORY_SIZE) {
-        actionHistory.shift();
-        currentHistoryIndex--;
-      }
-      
-      saveToLocalStorage();
     }
+  };
+  
+  // Configuración específica para gráficos de torta
+  if (chartType === 'pie') {
+    chartOptions.plugins.datalabels = {
+      formatter: (value, ctx) => {
+        // Si el valor es menor a 5%, mostrar la etiqueta fuera del gráfico
+        if (value < 5) {
+          return null;
+        }
+        return value.toFixed(1) + '%';
+      },
+      color: '#fff',
+      font: {
+        weight: 'bold',
+        size: 12
+      }
+    };
+  }
+  
+  // Configuración específica para gráficos de barras
+  if (chartType === 'bar') {
+    chartOptions.scales = {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        title: {
+          display: true,
+          text: 'Porcentaje (%)'
+        }
+      }
+    };
+    chartOptions.plugins.datalabels = {
+      formatter: function(value) {
+        return value.toFixed(1) + '%';
+      },
+      color: '#1e293b',
+      font: {
+        weight: 'bold',
+        size: 12
+      },
+      anchor: 'end',
+      align: 'top'
+    };
+  }
+  
+  // Configuración específica para gráficos de líneas
+  if (chartType === 'line') {
+    chartOptions.scales = {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        title: {
+          display: true,
+          text: 'Porcentaje (%)'
+        }
+      }
+    };
+    chartOptions.plugins.datalabels = {
+      formatter: function(value) {
+        return value.toFixed(1) + '%';
+      },
+      color: '#1e293b',
+      font: {
+        weight: 'bold',
+        size: 12
+      },
+      align: 'top',
+      offset: 8
+    };
+  }
+  
+  window[canvasId] = new Chart(ctx, {
+    type: chartType,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Porcentaje (%)',
+        data: dataValues,
+        backgroundColor: colors,
+        borderColor: colors.map(c => c.replace(')', ', 0.8)')),
+        borderWidth: 1,
+        fill: chartType === 'line'
+      }]
+    },
+    options: chartOptions,
+    plugins: chartType === 'pie' || chartType === 'bar' || chartType === 'line' ? [ChartDataLabels] : []
+  });
+}
+
+// Función para actualizar gráficos según el tipo seleccionado
+function actualizarGraficos() {
+  if (!currentData.length) return;
+  
+  const distribuciones = calcularDistribuciones(currentData);
+  renderDemographicsCharts(distribuciones);
+  
+  // Renderizar gráficos de las pestañas activas
+  const activeTab = document.querySelector('.tab.active[data-tab]');
+  if (activeTab) {
+    const tabId = activeTab.getAttribute('data-tab');
+    if (tabId === 'sociocultural') {
+      renderSocioculturalCharts();
+    } else if (tabId === 'afectivos') {
+      renderAfectivosCharts();
+    } else if (tabId === 'cognitivos') {
+      renderCognitivosCharts();
+    } else if (tabId === 'ambiental') {
+      renderAmbientalCharts();
+    } else if (tabId === 'economica') {
+      renderEconomicaCharts();
+    } else if (tabId === 'comunitario') {
+      renderComunitarioCharts();
+    }
+  }
+}
+
+// Función para actualizar toda la interfaz
+async function actualizar() {
+  // Mostrar loading
+  const loadingElement = document.createElement('div');
+  loadingElement.className = 'loading';
+  loadingElement.innerHTML = '<div class="spinner"></div><p>Cargando datos...</p>';
+  const dashboard = document.querySelector('.proambiental-dashboard');
+  dashboard.appendChild(loadingElement);
+  
+  try {
+    // Obtener datos filtrados
+    currentData = await obtenerFiltrados();
     
-    function undoAction() {
-      if (currentHistoryIndex >= 0) {
-        const action = actionHistory[currentHistoryIndex];
-        if (action && action.undo) {
-          action.undo();
-          currentHistoryIndex--;
-          saveToLocalStorage();
-        }
+    // Actualizar resumen
+    summaryTotal.textContent = currentData.length;
+    
+    // Calcular distribuciones
+    const distribuciones = calcularDistribuciones(currentData);
+    
+    // Actualizar tarjetas de resumen con valores predominantes
+    actualizarResumen(distribuciones);
+    
+    // Renderizar gráficos demográficos
+    renderDemographicsCharts(distribuciones);
+    
+    // Renderizar tablas
+    renderTablasDemograficas(distribuciones);
+    
+    // Si la pestaña activa es sociocultural, renderizar esos gráficos
+    const activeTab = document.querySelector('.tab.active[data-tab]');
+    if (activeTab) {
+      const tabId = activeTab.getAttribute('data-tab');
+      if (tabId === 'sociocultural') {
+        renderSocioculturalCharts();
       }
     }
     
-    function redoAction() {
-      if (currentHistoryIndex < actionHistory.length - 1) {
-        currentHistoryIndex++;
-        const action = actionHistory[currentHistoryIndex];
-        if (action && action.redo) {
-          action.redo();
-          saveToLocalStorage();
+  } catch (error) {
+    console.error('Error al actualizar:', error);
+    alert('Error al cargar los datos. Por favor, intente nuevamente.');
+  } finally {
+    // Remover loading
+    loadingElement.remove();
+  }
+}
+
+// Función para actualizar las tarjetas de resumen
+function actualizarResumen(distribuciones) {
+  // Encontrar el tipo de hogar predominante
+  let maxHogar = { key: '', value: 0 };
+  Object.keys(distribuciones.hogar).forEach(key => {
+    if (distribuciones.hogar[key] > maxHogar.value) {
+      maxHogar = { key, value: distribuciones.hogar[key] };
+    }
+  });
+  summaryHogar.textContent = maxHogar.key;
+  summaryHogarChange.innerHTML = `<span>${maxHogar.value.toFixed(1)}% del total</span>`;
+  
+  // Encontrar la educación predominante
+  let maxEducacion = { key: '', value: 0 };
+  Object.keys(distribuciones.educacion).forEach(key => {
+    if (distribuciones.educacion[key] > maxEducacion.value) {
+      maxEducacion = { key, value: distribuciones.educacion[key] };
+    }
+  });
+  summaryEducacion.textContent = maxEducacion.key;
+  summaryEducacionChange.innerHTML = `<span>${maxEducacion.value.toFixed(1)}% del total</span>`;
+  
+  // Encontrar la situación laboral predominante
+  let maxLaboral = { key: '', value: 0 };
+  Object.keys(distribuciones.laboral).forEach(key => {
+    if (distribuciones.laboral[key] > maxLaboral.value) {
+      maxLaboral = { key, value: distribuciones.laboral[key] };
+    }
+  });
+  summaryLaboral.textContent = maxLaboral.key;
+  summaryLaboralChange.innerHTML = `<span>${maxLaboral.value.toFixed(1)}% del total</span>`;
+}
+
+// Función para renderizar tablas demográficas
+function renderTablasDemograficas(distribuciones) {
+  // Tabla de estado civil
+  renderTabla('tablaEstadoCivil', 'totalEstadoCivil', distribuciones.estadoCivil, distribuciones.counts.estadoCivil);
+  
+  // Tabla de edades
+  renderTabla('tablaEdades', 'totalEdades', distribuciones.edad, distribuciones.counts.edad);
+  
+  // Tabla de educación
+  renderTabla('tablaEducacion', 'totalEducacion', distribuciones.educacion, distribuciones.counts.educacion);
+  
+  // Tabla de situación laboral
+  renderTabla('tablaLaboral', 'totalLaboral', distribuciones.laboral, distribuciones.counts.laboral);
+  
+  // Tabla de ingreso
+  renderTabla('tablaIngreso', 'totalIngreso', distribuciones.ingreso, distribuciones.counts.ingreso);
+  
+  // Tabla de tipo de hogar
+  renderTabla('tablaHogar', 'totalHogar', distribuciones.hogar, distribuciones.counts.hogar);
+}
+
+// Función para renderizar una tabla individual
+function renderTabla(tbodyId, totalId, distribucion, counts) {
+  const tbody = document.getElementById(tbodyId);
+  const totalElement = document.getElementById(totalId);
+  
+  if (!tbody || !totalElement) return;
+  
+  // Limpiar tabla
+  tbody.innerHTML = '';
+  
+  // Calcular total
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  totalElement.textContent = total;
+  
+  // Ordenar por porcentaje descendente
+  const sortedEntries = Object.entries(distribucion)
+    .filter(([key]) => key && key.trim() !== '')
+    .sort((a, b) => b[1] - a[1]);
+  
+  // Renderizar filas
+  sortedEntries.forEach(([key, value]) => {
+    const count = counts[key] || 0;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${key}</td>
+      <td style="text-align:right">${count}</td>
+      <td style="text-align:right">${value.toFixed(1)}%</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// Inicializar la aplicación
+initApp();
+
+// ============================================
+// DASHBOARD DE CARACTERIZACIÓN DE DESECHOS
+// ============================================
+
+function initCaracterizacionDashboard() {
+  (async function(){
+    // ---------- CONFIGURACIÓN ----------
+    const SUPABASE_URL = "https://dutapywxsiuxboqsjqvf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1dGFweXd4c2l1eGJvcXNqcXZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTk1MTUsImV4cCI6MjA2OTI5NTUxNX0.SBIDeV_WAWlyLs-ROD1ibXtqqY5bbbh0gouY8gRB9Y4";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Variables globales
+    let currentCaracterizacionData = [];
+    let allCaracterizacionData = [];
+    let currentChartTypeCaracterizacion = 'bar';
+    let filterOptionsCaracterizacion = {
+      lugares: []
+    };
+    
+    // Selectores
+    const selectLugar = document.getElementById('selectLugar');
+    const lugarInfo = document.getElementById('lugarInfo');
+    const summaryEncuestas = document.getElementById('summaryEncuestas');
+    const summaryUbicaciones = document.getElementById('summaryUbicaciones');
+    const summaryTotalKg = document.getElementById('summaryTotalKg');
+    const summaryPromedio = document.getElementById('summaryPromedio');
+    
+    // Elementos de la tabla
+    const tbodyResumen = document.getElementById('tbodyResumen');
+    
+    // Modal de ayuda
+    const helpModal = document.getElementById('helpModal');
+    const closeModal = document.getElementById('closeModal');
+    const btnHelp = document.getElementById('btnHelp');
+    
+    // Inicializar aplicación
+    async function initCaracterizacionApp() {
+      await cargarDatosCaracterizacion();
+      await inicializarFiltrosCaracterizacion();
+      await actualizarCaracterizacion();
+      setupEventListenersCaracterizacion();
+    }
+    
+    // Configurar event listeners
+    function setupEventListenersCaracterizacion() {
+      // Filtro de ubicación
+      selectLugar.addEventListener('change', async function() {
+        await actualizarCaracterizacion();
+      });
+      
+      // Botón de restablecer filtros
+      document.getElementById('btnResetFilters').addEventListener('click', function() {
+        selectLugar.value = '';
+        actualizarCaracterizacion();
+      });
+      
+      // Botones de tipo de gráfico
+      document.querySelectorAll('.chart-action-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.chart-action-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentChartTypeCaracterizacion = this.getAttribute('data-chart-type');
+          actualizarGraficosCaracterizacion();
+        });
+      });
+      
+      // Modal de ayuda
+      btnHelp.addEventListener('click', function() {
+        helpModal.classList.add('active');
+      });
+      
+      closeModal.addEventListener('click', function() {
+        helpModal.classList.remove('active');
+      });
+      
+      helpModal.addEventListener('click', function(e) {
+        if (e.target === helpModal) {
+          helpModal.classList.remove('active');
         }
-      }
-    }
-
-    // --- Sistema de Navegación ---
-    function addToNavigationHistory(sectionId) {
-      if (currentNavigationIndex < navigationHistory.length - 1) {
-        navigationHistory = navigationHistory.slice(0, currentNavigationIndex + 1);
-      }
-      
-      navigationHistory.push(sectionId);
-      currentNavigationIndex = navigationHistory.length - 1;
-      
-      if (navigationHistory.length > 20) {
-        navigationHistory.shift();
-        currentNavigationIndex--;
-      }
+      });
     }
     
-    function navigateBack() {
-      if (currentNavigationIndex > 0) {
-        currentNavigationIndex--;
-        const sectionId = navigationHistory[currentNavigationIndex];
-        showSection(sectionId, false);
+    // Cargar todos los datos de caracterización
+    async function cargarDatosCaracterizacion() {
+      const q = await supabase.from('caracterizacion_desechos_daule').select('*');
+      if (q.error) {
+        console.error('Error al cargar datos de caracterización:', q.error);
+        return;
       }
+      allCaracterizacionData = q.data || [];
     }
     
-    function navigateForward() {
-      if (currentNavigationIndex < navigationHistory.length - 1) {
-        currentNavigationIndex++;
-        const sectionId = navigationHistory[currentNavigationIndex];
-        showSection(sectionId, false);
-      }
-    }
-
-    // --- Sistema de localStorage ---
-    function saveToLocalStorage() {
-      if (!isLoggedIn) return;
+    // Inicializar filtros
+    async function inicializarFiltrosCaracterizacion() {
+      // Obtener ubicaciones únicas
+      const lugares = [...new Set(allCaracterizacionData.map(row => row.lugar).filter(Boolean))].sort();
+      filterOptionsCaracterizacion.lugares = lugares;
       
-      const saveData = {
-        content: document.getElementById('mainContent').innerHTML,
-        actionHistory: actionHistory,
-        currentHistoryIndex: currentHistoryIndex,
-        navigationHistory: navigationHistory,
-        currentNavigationIndex: currentNavigationIndex
+      // Actualizar información
+      lugarInfo.textContent = `${lugares.length} ubicaciones disponibles`;
+      
+      // Llenar selector
+      selectLugar.innerHTML = '<option value="">Todas las ubicaciones</option>';
+      lugares.forEach(lugar => {
+        const option = document.createElement('option');
+        option.value = lugar;
+        option.textContent = lugar;
+        selectLugar.appendChild(option);
+      });
+    }
+    
+    // Obtener datos filtrados
+    async function obtenerDatosFiltradosCaracterizacion() {
+      let q = supabase.from('caracterizacion_desechos_daule').select('*');
+      
+      if (selectLugar.value) {
+        q = q.eq('lugar', selectLugar.value);
+      }
+      
+      const r = await q;
+      if (r.error) {
+        console.error('Error al obtener datos filtrados:', r.error);
+        return [];
+      }
+      return r.data || [];
+    }
+    
+    // Calcular resumen de categorías
+    function calcularResumenCategorias(rows) {
+      // Definir categorías y subcategorías
+      const categorias = {
+        'Residuos Orgánicos': {
+          subcategorias: [
+            'restos_de_comida',
+            'cascaras_de_fruta',
+            'cascaras_de_huevo',
+            'restos_de_vegetales',
+            'cascaras_de_platano',
+            'cascaras_de_naranja',
+            'cascaras_de_limon'
+          ],
+          total: 0
+        },
+        'Residuos Inorgánicos Reciclables': {
+          subcategorias: [
+            'carton',
+            'papel',
+            'envases_de_plastico',
+            'botellas_de_plastico',
+            'botellas_de_vidrio',
+            'latas_de_aluminio',
+            'latas_de_estaño',
+            'envases_tetra_pack'
+          ],
+          total: 0
+        },
+        'Residuos Inorgánicos No Reciclables': {
+          subcategorias: [
+            'pañales_desechables',
+            'pañitos_humedos',
+            'toallas_sanitarias',
+            'algodon',
+            'curitas',
+            'papel_higienico_usado',
+            'servilletas_usadas',
+            'cigarros'
+          ],
+          total: 0
+        },
+        'Residuos Peligrosos': {
+          subcategorias: [
+            'baterias',
+            'pilas',
+            'focos',
+            'medicamentos_vencidos',
+            'aceite_de_cocina_usado',
+            'envases_de_aerosol',
+            'productos_quimicos_del_hogar'
+          ],
+          total: 0
+        }
       };
       
-      localStorage.setItem('wasteManagementSystem', JSON.stringify(saveData));
+      // Calcular totales
+      let totalGeneral = 0;
+      const resumen = {};
+      
+      // Inicializar estructura
+      Object.keys(categorias).forEach(categoria => {
+        resumen[categoria] = {
+          total: 0,
+          subcategorias: {}
+        };
+        
+        categorias[categoria].subcategorias.forEach(subcategoria => {
+          resumen[categoria].subcategorias[subcategoria] = 0;
+        });
+      });
+      
+      // Sumar valores de todas las filas
+      rows.forEach(row => {
+        Object.keys(categorias).forEach(categoria => {
+          categorias[categoria].subcategorias.forEach(subcategoria => {
+            const valor = parseFloat(row[subcategoria]) || 0;
+            resumen[categoria].total += valor;
+            resumen[categoria].subcategorias[subcategoria] += valor;
+            totalGeneral += valor;
+          });
+        });
+      });
+      
+      return { resumen, totalGeneral };
     }
     
-    function loadFromLocalStorage() {
-      const savedData = localStorage.getItem('wasteManagementSystem');
-      if (savedData) {
-        const data = JSON.parse(savedData);
+    // Actualizar todo el dashboard
+    async function actualizarCaracterizacion() {
+      // Mostrar loading
+      const dashboard = document.querySelector('.caracterizacion-desechos-dashboard');
+      const loadingElement = document.createElement('div');
+      loadingElement.className = 'loading';
+      loadingElement.innerHTML = '<div class="spinner"></div><p>Cargando datos de caracterización...</p>';
+      dashboard.appendChild(loadingElement);
+      
+      try {
+        // Obtener datos filtrados
+        currentCaracterizacionData = await obtenerDatosFiltradosCaracterizacion();
         
-        if (data.content) {
-          document.getElementById('mainContent').innerHTML = data.content;
-        }
+        // Calcular resumen
+        const { resumen, totalGeneral } = calcularResumenCategorias(currentCaracterizacionData);
         
-        if (data.actionHistory) {
-          actionHistory = data.actionHistory;
-          currentHistoryIndex = data.currentHistoryIndex || -1;
-        }
+        // Actualizar tarjetas de resumen
+        actualizarResumenCaracterizacion(currentCaracterizacionData, totalGeneral);
         
-        if (data.navigationHistory) {
-          navigationHistory = data.navigationHistory;
-          currentNavigationIndex = data.currentNavigationIndex || -1;
-        }
+        // Actualizar gráfico principal
+        actualizarGraficoPrincipal(resumen, totalGeneral);
         
-        initializeMovableElements();
-        // Actualizar altura después de cargar
-        setTimeout(updateContentHeight, 100);
+        // Actualizar tabla resumen
+        actualizarTablaResumen(resumen, totalGeneral);
+        
+      } catch (error) {
+        console.error('Error al actualizar dashboard de caracterización:', error);
+        alert('Error al cargar los datos de caracterización. Por favor, intente nuevamente.');
+      } finally {
+        loadingElement.remove();
       }
     }
-  </script>
-</body>
-</html>
+    
+    // Actualizar tarjetas de resumen
+    function actualizarResumenCaracterizacion(data, totalKg) {
+      // Total de encuestas
+      summaryEncuestas.textContent = data.length;
+      
+      // Total de ubicaciones únicas
+      const ubicacionesUnicas = [...new Set(data.map(row => row.lugar).filter(Boolean))];
+      summaryUbicaciones.textContent = ubicacionesUnicas.length;
+      
+      // Total de kilogramos
+      summaryTotalKg.textContent = `${totalKg.toFixed(2)} kg`;
+      
+      // Promedio por encuesta
+      const promedio = data.length > 0 ? totalKg / data.length : 0;
+      summaryPromedio.textContent = `${promedio.toFixed(2)} kg`;
+    }
+    
+    // Actualizar gráfico principal
+    function actualizarGraficoPrincipal(resumen, totalGeneral) {
+      const ctx = document.getElementById('mainChart').getContext('2d');
+      
+      // Destruir gráfico existente
+      if (window.mainChartCaracterizacion) {
+        window.mainChartCaracterizacion.destroy();
+      }
+      
+      // Preparar datos
+      const labels = Object.keys(resumen);
+      const dataValues = labels.map(categoria => resumen[categoria].total);
+      const percentages = dataValues.map(val => totalGeneral > 0 ? (val / totalGeneral) * 100 : 0);
+      
+      // Colores por categoría
+      const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+      
+      // Configuración según tipo de gráfico
+      let chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: currentChartTypeCaracterizacion === 'pie',
+            position: 'right'
+          },
+          title: {
+            display: true,
+            text: 'Distribución de Desechos por Categoría',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            padding: {
+              top: 10,
+              bottom: 20
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.dataset.label || '';
+                const value = context.parsed ? context.parsed.y : context.raw;
+                const percentage = percentages[context.dataIndex];
+                const weight = dataValues[context.dataIndex];
+                return `${label}: ${weight.toFixed(2)} kg (${percentage.toFixed(1)}%)`;
+              }
+            }
+          }
+        }
+      };
+      
+      // Configuración para gráficos de barras
+      if (currentChartTypeCaracterizacion === 'bar') {
+        chartOptions.scales = {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Peso (kg)'
+            }
+          }
+        };
+        chartOptions.plugins.datalabels = {
+          formatter: function(value, context) {
+            const percentage = percentages[context.dataIndex];
+            return `${percentage.toFixed(1)}%`;
+          },
+          color: '#1e293b',
+          font: {
+            weight: 'bold',
+            size: 12
+          },
+          anchor: 'end',
+          align: 'top'
+        };
+      }
+      
+      // Configuración para gráficos de torta
+      if (currentChartTypeCaracterizacion === 'pie') {
+        chartOptions.plugins.datalabels = {
+          formatter: function(value, context) {
+            const percentage = percentages[context.dataIndex];
+            return `${context.chart.data.labels[context.dataIndex]}: ${percentage.toFixed(1)}%`;
+          },
+          color: '#fff',
+          font: {
+            weight: 'bold',
+            size: 12
+          }
+        };
+      }
+      
+      // Configuración para gráficos de línea
+      if (currentChartTypeCaracterizacion === 'line') {
+        chartOptions.scales = {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Peso (kg)'
+            }
+          }
+        };
+        chartOptions.plugins.datalabels = {
+          formatter: function(value, context) {
+            const percentage = percentages[context.dataIndex];
+            return `${percentage.toFixed(1)}%`;
+          },
+          color: '#1e293b',
+          font: {
+            weight: 'bold',
+            size: 12
+          },
+          align: 'top',
+          offset: 8
+        };
+      }
+      
+      // Crear gráfico
+      window.mainChartCaracterizacion = new Chart(ctx, {
+        type: currentChartTypeCaracterizacion,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Peso (kg)',
+            data: dataValues,
+            backgroundColor: colors,
+            borderColor: colors.map(c => c.replace(')', ', 0.8)')),
+            borderWidth: 1,
+            fill: currentChartTypeCaracterizacion === 'line'
+          }]
+        },
+        options: chartOptions,
+        plugins: currentChartTypeCaracterizacion === 'pie' || currentChartTypeCaracterizacion === 'bar' || currentChartTypeCaracterizacion === 'line' ? [ChartDataLabels] : []
+      });
+    }
+    
+    // Actualizar gráficos según tipo seleccionado
+    function actualizarGraficosCaracterizacion() {
+      const { resumen, totalGeneral } = calcularResumenCategorias(currentCaracterizacionData);
+      actualizarGraficoPrincipal(resumen, totalGeneral);
+    }
+    
+    // Actualizar tabla resumen
+    function actualizarTablaResumen(resumen, totalGeneral) {
+      if (!tbodyResumen) return;
+      
+      // Limpiar tabla
+      tbodyResumen.innerHTML = '';
+      
+      // Renderizar categorías y subcategorías
+      Object.keys(resumen).forEach((categoria, catIndex) => {
+        const categoriaTotal = resumen[categoria].total;
+        const categoriaPorcentaje = totalGeneral > 0 ? (categoriaTotal / totalGeneral) * 100 : 0;
+        
+        // Fila de categoría
+        const categoriaRow = document.createElement('tr');
+        categoriaRow.className = 'category-header';
+        categoriaRow.innerHTML = `
+          <td><strong>${categoria}</strong></td>
+          <td style="text-align:right"><strong>${categoriaTotal.toFixed(2)} kg</strong></td>
+          <td style="text-align:right"><strong>${categoriaPorcentaje.toFixed(1)}%</strong></td>
+        `;
+        tbodyResumen.appendChild(categoriaRow);
+        
+        // Filas de subcategorías
+        Object.keys(resumen[categoria].subcategorias).forEach(subcategoria => {
+          const subcategoriaValor = resumen[categoria].subcategorias[subcategoria];
+          const subcategoriaPorcentaje = categoriaTotal > 0 ? (subcategoriaValor / categoriaTotal) * 100 : 0;
+          
+          const subcategoriaRow = document.createElement('tr');
+          subcategoriaRow.className = 'subcategory-row';
+          
+          // Formatear nombre de subcategoría
+          const nombreFormateado = subcategoria
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          
+          subcategoriaRow.innerHTML = `
+            <td>${nombreFormateado}</td>
+            <td style="text-align:right">${subcategoriaValor.toFixed(2)} kg</td>
+            <td style="text-align:right">${subcategoriaPorcentaje.toFixed(1)}%</td>
+          `;
+          tbodyResumen.appendChild(subcategoriaRow);
+        });
+        
+        // Separador entre categorías (excepto después de la última)
+        if (catIndex < Object.keys(resumen).length - 1) {
+          const separatorRow = document.createElement('tr');
+          separatorRow.className = 'separator-row';
+          separatorRow.innerHTML = '<td colspan="3"></td>';
+          tbodyResumen.appendChild(separatorRow);
+        }
+      });
+      
+      // Fila de total general
+      const totalRow = document.createElement('tr');
+      totalRow.className = 'total-row';
+      totalRow.innerHTML = `
+        <td><strong>TOTAL GENERAL</strong></td>
+        <td style="text-align:right"><strong>${totalGeneral.toFixed(2)} kg</strong></td>
+        <td style="text-align:right"><strong>100.0%</strong></td>
+      `;
+      tbodyResumen.appendChild(totalRow);
+    }
+    
+    // Inicializar la aplicación de caracterización
+    initCaracterizacionApp();
+  })();
+}
+
+// ============================================
+// INICIALIZACIÓN DE LAS TRES SUBSECCIONES
+// ============================================
+
+// Función para inicializar todas las subsecciones
+function initAllSubsections() {
+  // Inicializar dashboard de comportamiento proambiental (ya está en la función initProambientalDashboard)
+  
+  // Inicializar dashboard de autosustentabilidad con datos de ejemplo
+  initAutosustentabilidadDashboard();
+  
+  // Inicializar dashboard de caracterización de desechos
+  initCaracterizacionDashboard();
+}
+
+// Función para inicializar el dashboard de autosustentabilidad (datos de ejemplo)
+function initAutosustentabilidadDashboard() {
+  // Gráfico de evolución de tasa de reciclaje
+  const reciclajeCtx = document.getElementById('reciclajeChart');
+  if (reciclajeCtx) {
+    new Chart(reciclajeCtx, {
+      type: 'line',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Tasa de Reciclaje (%)',
+          data: [35, 38, 40, 42, 41, 42],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Evolución Mensual'
+          }
+        }
+      }
+    });
+  }
+  
+  // Gráfico de participación
+  const participacionCtx = document.getElementById('participacionChart');
+  if (participacionCtx) {
+    new Chart(participacionCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Programa A', 'Programa B', 'Programa C', 'Programa D'],
+        datasets: [{
+          label: 'Participantes',
+          data: [150, 200, 120, 180],
+          backgroundColor: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Participación por Programa'
+          }
+        }
+      }
+    });
+  }
+}
+
+// ============================================
+// INICIALIZACIÓN AL CARGAR LA PÁGINA
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  showSection('inicio');
+  addToNavigationHistory('inicio');
+  
+  if (isTouchDevice) {
+    document.body.classList.add('touch-device');
+  }
+  
+  // Inicializar solo la subsección de comportamiento proambiental por defecto
+  const savedData = localStorage.getItem('wasteManagementSystem');
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    if (data.content) {
+      // Datos guardados disponibles
+    }
+  }
+  
+  // Configurar el evento para cuando se muestre la sección de indicadores
+  const indicadoresLink = document.querySelector('a[onclick="showSection(\'indicadores\')"]');
+  if (indicadoresLink) {
+    indicadoresLink.addEventListener('click', function() {
+      // Mostrar la subsección de comportamiento proambiental por defecto
+      setTimeout(() => {
+        showSubsection('comportamiento-proambiental');
+      }, 100);
+    });
+  }
+});
+
+// ============================================
+// FUNCIONES ADICIONALES PARA EL SISTEMA PRINCIPAL
+// ============================================
+
+// Asegurarse de que todas las funciones necesarias estén disponibles
+function ensureFunctions() {
+  // Verificar que las funciones de navegación de subsecciones existan
+  if (typeof showSubsection !== 'function') {
+    window.showSubsection = function(subsectionId) {
+      console.log('Mostrando subsección:', subsectionId);
+      // Implementación básica si no existe
+    };
+  }
+  
+  // Verificar que las funciones de inicialización existan
+  if (typeof initProambientalDashboard !== 'function') {
+    console.warn('initProambientalDashboard no está definida');
+  }
+  
+  if (typeof initCaracterizacionDashboard !== 'function') {
+    console.warn('initCaracterizacionDashboard no está definida');
+  }
+}
+
+// Ejecutar verificación
+ensureFunctions();
+})();
